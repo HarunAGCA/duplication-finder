@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "DuplicationFinder": {
+      "commandName": "Project",
+      "commandLineArgs": "\"C:\\Users\\Harun\\Desktop\\New folder\""
+    }
+  }
+}
