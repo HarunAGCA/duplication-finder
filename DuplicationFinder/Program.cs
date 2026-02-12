@@ -9,34 +9,39 @@ class Program
     static void Main(string[] args)
     {
         var workingMode = WorkingMode.Normal;
-        var nextArgumentIndex = 0;
-        var folderPath = string.Empty;
         var maxDuplicationCountForAFile = 0;
         var totalDuplicationCount = 0;
         var uniqueDuplicatedFileCount = 0;
         var deletedFileCount = 0;
+        var searchOption = SearchOption.TopDirectoryOnly;
 
         if (args.Length < 1)
         {
             Console.WriteLine("Unsufficent argument count!");
+            Console.WriteLine("Usage: DuplicationFinder <path> [--dry-run|-d] [--recursive|-r]");
             return;
         }
 
-        if (args[nextArgumentIndex] == "--dry-run" || args[nextArgumentIndex] == "-d")
+        var folderPath = args.Last();
+        if(!Directory.Exists(folderPath))
         {
-            workingMode = WorkingMode.DryRun;
-            nextArgumentIndex++;
+             Console.WriteLine($"The folder '{folderPath}' does not exist.");
+             return;
         }
 
-        if (args.Length - 1 < nextArgumentIndex)
+        foreach (var arg in args.Take(args.Length - 1))
         {
-            Console.WriteLine("Unsufficent argument count!");
-            return;
+            if (arg == "--dry-run" || arg == "-d")
+            {
+                workingMode = WorkingMode.DryRun;
+            }
+            else if (arg == "--recursive" || arg == "-r") 
+            {
+                searchOption = SearchOption.AllDirectories;
+            }
         }
 
-        folderPath = args[nextArgumentIndex];
-
-        var duplicatedFileGroups = FindDuplicateFiles(folderPath);
+        var duplicatedFileGroups = FindDuplicateFiles(folderPath, searchOption);
 
         uniqueDuplicatedFileCount = duplicatedFileGroups.Count;
 
@@ -89,10 +94,10 @@ class Program
 
     }
 
-    static List<List<string>> FindDuplicateFiles(string folderPath)
+    static List<List<string>> FindDuplicateFiles(string folderPath, SearchOption searchOption)
     {
         var fileHashes = new Dictionary<string, List<string>>();
-        var filePaths = Directory.GetFiles(folderPath, "*.*", SearchOption.TopDirectoryOnly);
+        var filePaths = Directory.GetFiles(folderPath, "*.*", searchOption);
 
         foreach (var filePath in filePaths)
         {
