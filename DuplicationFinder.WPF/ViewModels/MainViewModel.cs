@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DuplicationFinder.Core;
 using Microsoft.Win32;
+using System.Linq;
 
 namespace DuplicationFinder.WPF.ViewModels;
 
@@ -42,6 +43,15 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private ObservableCollection<DuplicateGroupViewModel> _duplicateGroups = new();
 
+    [ObservableProperty]
+    private double _progressValue;
+
+    [ObservableProperty]
+    private string _progressText = string.Empty;
+
+    [ObservableProperty]
+    private string _currentScanningFile = string.Empty;
+
     [RelayCommand]
     private void BrowseFolder()
     {
@@ -78,8 +88,15 @@ public partial class MainViewModel : ObservableObject
                 ? SearchOption.AllDirectories
                 : SearchOption.TopDirectoryOnly;
 
+            var progress = new Progress<ScanProgress>(p =>
+            {
+                ProgressValue = (double)p.ProcessedFiles / p.TotalFiles * 100;
+                ProgressText = $"{p.ProcessedFiles} / {p.TotalFiles}";
+                CurrentScanningFile = p.CurrentFile;
+            });
+
             var results = await Task.Run(() =>
-                _duplicationService.FindDuplicateFiles(SelectedFolderPath, searchOption));
+                _duplicationService.FindDuplicateFiles(SelectedFolderPath, searchOption, progress));
 
             if (results.Count == 0)
             {
@@ -159,6 +176,24 @@ public partial class DuplicateGroupViewModel : ObservableObject
 
     [ObservableProperty]
     private ObservableCollection<DuplicateFileViewModel> _files = new();
+
+    [RelayCommand]
+    private void SelectAll()
+    {
+        foreach (var file in Files.Where(f => !f.IsOriginal))
+        {
+            file.IsSelected = true;
+        }
+    }
+
+    [RelayCommand]
+    private void DeselectAll()
+    {
+        foreach (var file in Files.Where(f => !f.IsOriginal))
+        {
+            file.IsSelected = false;
+        }
+    }
 }
 
 public partial class DuplicateFileViewModel : ObservableObject

@@ -6,6 +6,8 @@ public enum WorkingMode
     Normal = 2
 }
 
+public record ScanProgress(int ProcessedFiles, int TotalFiles, string CurrentFile);
+
 public record DuplicationStatistic(int MaxDuplicationCountForAfile, int UniqueDuplicatedFileCount, int TotalDuplicationCount, int DeletedFileCount, WorkingMode Mode)
 {
     public override string ToString()

@@ -4,13 +4,18 @@ namespace DuplicationFinder.Core;
 
 public class DuplicationService
 {
-    public List<List<string>> FindDuplicateFiles(string folderPath, SearchOption searchOption)
+    public List<List<string>> FindDuplicateFiles(string folderPath, SearchOption searchOption, IProgress<ScanProgress>? progress = null)
     {
         var fileHashes = new Dictionary<string, List<string>>();
         var filePaths = Directory.GetFiles(folderPath, "*.*", searchOption);
+        int totalFiles = filePaths.Length;
+        int processedCount = 0;
 
         foreach (var filePath in filePaths)
         {
+            processedCount++;
+            progress?.Report(new ScanProgress(processedCount, totalFiles, Path.GetFileName(filePath)));
+
             try
             {
                 string fileHash = GetFileHash(filePath);

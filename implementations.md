@@ -13,10 +13,10 @@ This document tracks the progress of converting the DuplicationFinder CLI tool i
 - [x] Implement Basic UI with Folder Picker.
 - [x] Set up ViewModel and Command binding.
 
-## ⬜ Phase 3: Scanning & Results UI
-- [ ] Implement async scanning to prevent UI freeze.
-- [ ] Add Progress Bar for file hashing.
-- [ ] Visual Grid for duplicates with group selection.
+## ✅ Phase 3: Scanning & Results UI
+- [x] Implement async scanning to prevent UI freeze.
+- [x] Add Progress Bar for file hashing.
+- [x] Visual Grid for duplicates with group selection.
 
 ## ⬜ Phase 4: UX & Final Polish
 - [ ] Implement secure deletion with confirmation.
