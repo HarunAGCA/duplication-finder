@@ -8,10 +8,10 @@ This document tracks the progress of converting the DuplicationFinder CLI tool i
 - [x] Move shared models (`WorkingMode`, `DuplicationStatistic`) to `Core`.
 - [x] Update CLI project to reference `Core` and use the service.
 
-## 🟦 Phase 2: UI Foundation (Next)
-- [ ] Create `DuplicationFinder.WPF` project.
-- [ ] Implement Basic UI with Folder Picker.
-- [ ] Set up ViewModel and Command binding.
+## ✅ Phase 2: UI Foundation
+- [x] Create `DuplicationFinder.WPF` project.
+- [x] Implement Basic UI with Folder Picker.
+- [x] Set up ViewModel and Command binding.
 
 ## ⬜ Phase 3: Scanning & Results UI
 - [ ] Implement async scanning to prevent UI freeze.
