@@ -120,7 +120,7 @@ public partial class MainViewModel : ObservableObject
                     FileHash = DuplicationService.GetFileHash(group[0])[..12] + "…",
                     FileSize = new FileInfo(group[0]).Length,
                     Files = new ObservableCollection<DuplicateFileViewModel>(
-                        group.Select((f, i) => new DuplicateFileViewModel
+                        group.Select((f, i) => new DuplicateFileViewModel(OnSelectionChanged)
                         {
                             FilePath = f,
                             FileName = Path.GetFileName(f),
@@ -149,6 +149,11 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
+    private void OnSelectionChanged()
+    {
+        DeleteSelectedCommand.NotifyCanExecuteChanged();
+    }
+
     public string FormatFileSize(long bytes)
     {
         string[] suffixes = ["B", "KB", "MB", "GB", "TB"];
@@ -160,6 +165,86 @@ public partial class MainViewModel : ObservableObject
             size /= 1024;
         }
         return $"{size:0.##} {suffixes[order]}";
+    }
+
+    private bool CanDelete() => DuplicateGroups.Any(g => g.Files.Any(f => f.IsSelected));
+
+    [RelayCommand(CanExecute = nameof(CanDelete))]
+    private async Task DeleteSelectedAsync()
+    {
+        int totalSelected = DuplicateGroups.Sum(g => g.Files.Count(f => f.IsSelected));
+        if (totalSelected == 0) return;
+
+        string modeLabel = IsDryRun ? "simulate" : "permanently delete";
+        var result = System.Windows.MessageBox.Show(
+            $"Are you sure you want to {modeLabel} {totalSelected} file(s)?",
+            "Confirm Action",
+            System.Windows.MessageBoxButton.YesNo,
+            System.Windows.MessageBoxImage.Warning);
+
+        if (result != System.Windows.MessageBoxResult.Yes) return;
+
+        IsScanning = true;
+        StatusMessage = IsDryRun ? "🧪 Simulating deletion..." : "🗑 Deleting files...";
+
+        await Task.Run(() =>
+        {
+            foreach (var group in DuplicateGroups.ToList())
+            {
+                var filesToDelete = group.Files.Where(f => f.IsSelected).ToList();
+                foreach (var file in filesToDelete)
+                {
+                    if (!IsDryRun)
+                    {
+                        try
+                        {
+                            File.Delete(file.FilePath);
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Windows.Application.Current.Dispatcher.Invoke(() => 
+                                StatusMessage = $"⚠ Error deleting {file.FileName}: {ex.Message}");
+                        }
+                    }
+                }
+            }
+        });
+
+        // Refresh Results (simple UI refresh)
+        if (!IsDryRun)
+        {
+            foreach (var group in DuplicateGroups.ToList())
+            {
+                var deletedFiles = group.Files.Where(f => f.IsSelected).ToList();
+                foreach (var file in deletedFiles)
+                {
+                    group.Files.Remove(file);
+                }
+                
+                // If group now has only one file (the original), remove the group
+                if (group.Files.Count <= 1)
+                {
+                    DuplicateGroups.Remove(group);
+                }
+            }
+        }
+
+        UniqueDuplicateCount = DuplicateGroups.Count;
+        TotalRedundantCopies = DuplicateGroups.Sum(g => g.Files.Count - 1);
+        MaxRedundancy = DuplicateGroups.Any() ? DuplicateGroups.Max(g => g.Files.Count - 1) : 0;
+        HasResults = DuplicateGroups.Any();
+        
+        if (!IsDryRun)
+        {
+            StatusMessage = $"✅ Successfully deleted {totalSelected} file(s).";
+        }
+        else
+        {
+            StatusMessage = $"🧪 Dry run complete. {totalSelected} file(s) would have been deleted.";
+        }
+
+        IsScanning = false;
+        DeleteSelectedCommand.NotifyCanExecuteChanged();
     }
 }
 
@@ -198,6 +283,14 @@ public partial class DuplicateGroupViewModel : ObservableObject
 
 public partial class DuplicateFileViewModel : ObservableObject
 {
+    private readonly Action? _onSelectionChanged;
+
+    public DuplicateFileViewModel() { } // For XAML designer or default cases
+    public DuplicateFileViewModel(Action onSelectionChanged)
+    {
+        _onSelectionChanged = onSelectionChanged;
+    }
+
     [ObservableProperty]
     private string _filePath = string.Empty;
 
@@ -212,4 +305,9 @@ public partial class DuplicateFileViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _isSelected;
+
+    partial void OnIsSelectedChanged(bool value)
+    {
+        _onSelectionChanged?.Invoke();
+    }
 }

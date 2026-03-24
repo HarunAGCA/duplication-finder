@@ -18,7 +18,7 @@ This document tracks the progress of converting the DuplicationFinder CLI tool i
 - [x] Add Progress Bar for file hashing.
 - [x] Visual Grid for duplicates with group selection.
 
-## ⬜ Phase 4: UX & Final Polish
-- [ ] Implement secure deletion with confirmation.
-- [ ] Add "Dry Run" visual cues.
-- [ ] Theme polish (Modern/Dark mode support).
+## ✅ Phase 4: UX & Final Polish
+- [x] Implement secure deletion with confirmation.
+- [x] Add "Dry Run" visual cues.
+- [x] Theme polish (Modern/Dark mode support).
