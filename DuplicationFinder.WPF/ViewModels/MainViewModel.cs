@@ -41,6 +41,9 @@ public partial class MainViewModel : ObservableObject
     private int _maxRedundancy;
 
     [ObservableProperty]
+    private long _totalSpaceToSave;
+
+    [ObservableProperty]
     private ObservableCollection<DuplicateGroupViewModel> _duplicateGroups = new();
 
     [ObservableProperty]
@@ -133,6 +136,7 @@ public partial class MainViewModel : ObservableObject
             }
 
             HasResults = true;
+            OnSelectionChanged(); // Initialize space count
             StatusMessage = $"Found {UniqueDuplicateCount} duplicate group(s) with {TotalRedundantCopies} redundant copies.";
         }
         catch (UnauthorizedAccessException)
@@ -151,6 +155,7 @@ public partial class MainViewModel : ObservableObject
 
     private void OnSelectionChanged()
     {
+        TotalSpaceToSave = DuplicateGroups.Sum(g => g.Files.Where(f => f.IsSelected).Count() * g.FileSize);
         DeleteSelectedCommand.NotifyCanExecuteChanged();
     }
 
@@ -233,6 +238,7 @@ public partial class MainViewModel : ObservableObject
         TotalRedundantCopies = DuplicateGroups.Sum(g => g.Files.Count - 1);
         MaxRedundancy = DuplicateGroups.Any() ? DuplicateGroups.Max(g => g.Files.Count - 1) : 0;
         HasResults = DuplicateGroups.Any();
+        OnSelectionChanged(); // Reset space count
         
         if (!IsDryRun)
         {
