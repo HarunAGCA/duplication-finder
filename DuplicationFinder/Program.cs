@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -17,8 +17,8 @@ class Program
 
         if (args.Length < 1)
         {
-            Console.WriteLine("Unsufficent argument count!");
-            Console.WriteLine("Usage: DuplicationFinder <path> [--dry-run|-d] [--recursive|-r]");
+            Console.WriteLine("Insufficient argument count!");
+            Console.WriteLine("Usage: DuplicationFinder [--dry-run|-d] [--recursive|-r] <path>");
             return;
         }
 
@@ -48,8 +48,8 @@ class Program
         foreach (var group in duplicatedFileGroups)
         {
             /*
-             * 1 is substructed because one of the files 
-             * is considered the orginal not the duplication
+             * 1 is subtracted because one of the files 
+             * is considered the original not the duplication
              */
 
             totalDuplicationCount += group.Count - 1;
@@ -74,12 +74,12 @@ class Program
                 switch (workingMode)
                 {
                     case WorkingMode.DryRun:
-                        Console.WriteLine($"The file would be deleted : {file}");
+                        Console.WriteLine($"[DRY-RUN] File would be deleted: {file}");
                         deletedFileCount++;
                         break;
                     case WorkingMode.Normal:
                         File.Delete(file);
-                        Console.WriteLine($"The file has been deleted : {file}");
+                        Console.WriteLine($"Deleted file: {file}");
                         deletedFileCount++;
                         break;
                     default:
@@ -88,9 +88,15 @@ class Program
             }
         }
 
-        DuplicationStatistic statistic = new(maxDuplicationCountForAFile, uniqueDuplicatedFileCount, totalDuplicationCount, deletedFileCount);
+        if (uniqueDuplicatedFileCount == 0)
+        {
+            Console.WriteLine("\n\nNo duplicate files were found.");
+            return;
+        }
+
+        DuplicationStatistic statistic = new(maxDuplicationCountForAFile, uniqueDuplicatedFileCount, totalDuplicationCount, deletedFileCount, workingMode);
         
-        Console.WriteLine($"\n\n\n{statistic}");
+        Console.WriteLine($"\n\n{statistic}");
 
     }
 
@@ -135,4 +141,19 @@ enum WorkingMode
     Normal = 2
 }
 
-record DuplicationStatistic(int MaxDuplicationCountForAfile, int UniqueDuplicatedFileCount, int TotalDuplicationCount, int DeletedFileCount);
+record DuplicationStatistic(int MaxDuplicationCountForAfile, int UniqueDuplicatedFileCount, int TotalDuplicationCount, int DeletedFileCount, WorkingMode Mode)
+{
+    public override string ToString()
+    {
+        string deletionLabel = Mode == WorkingMode.DryRun ? "Files That Would Be Deleted" : "Files Actually Deleted";
+        return $"""
+               =======================
+               Duplication Statistics
+               =======================
+               Unique Files with Duplicates: {UniqueDuplicatedFileCount}
+               Total Redundant Copies Found: {TotalDuplicationCount}
+               Max Redundancy for a Single File: {MaxDuplicationCountForAfile}
+               {deletionLabel}: {DeletedFileCount}
+               """;
+    }
+}
